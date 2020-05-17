@@ -56,7 +56,7 @@ class Container:
             if default is not None:
                 self.values = [default] * incremental
             else:
-                self.values = [randint(0, incremental)] * incremental
+                self.values = [randint(0, incremental-1)] * incremental
         else:
             for i in range(incremental):
                 self.values.append(Container(n_battlefields - 1, default, incremental - i))
@@ -87,7 +87,6 @@ class Agent:
         while not policy.is_leaf():
             policy = policy.get(state.battlefields[i])
             i += 1
-
         p_greedy = random()
         if p_greedy < self.e_greedy and train:
             state.apply_action(randint(0, state.available_troops))
@@ -120,14 +119,13 @@ class Agent:
         returns = self.returns
         i = 0
 
-        print("State:", state.battlefields)
+
         while not policy.is_leaf():
             policy = policy.get(state.battlefields[i])
             action_value = action_value.get(state.battlefields[i])
             returns = returns.get(state.battlefields[i])
             i += 1
 
-        print("Action:", state.action + 1)
         action_value = action_value.get(state.action)
         returns = returns.get(state.action)
 
@@ -135,7 +133,7 @@ class Agent:
         new_returns = returns.get(state.battlefields[i]) + [episode_return]
         returns.set(state.battlefields[i], new_returns)
         action_value.set(state.battlefields[i], Agent.mean(new_returns))
-        policy.set(state.battlefields[i], Agent.argmax(new_returns))
+        policy.set(state.battlefields[i], Agent.argmax(action_value.values))
 
 
     @staticmethod
