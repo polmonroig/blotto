@@ -35,6 +35,14 @@ class State:
                 return False
         return True
 
+    def fill_empty(self):
+        m = 500
+        arg = 0
+        for i, value in enumerate(self.battlefields):
+            if value < m:
+                m = value
+                arg = i
+        self.battlefields[arg]+= self.available_troops
 
     def is_terminal(self):
         return self.available_troops == 0 or self.not_empty()
@@ -178,6 +186,8 @@ for episode in range(n_episodes):
     initial_state_b = State(n_battlefields)
     while agent.update(initial_state_a):
         pass
+    #initial_state_a.fill_empty()
+    #initial_state_b.fill_empty()
     print("Battlefields A:", initial_state_a.battlefields)
     while agent.update(initial_state_b):
         pass
@@ -196,6 +206,7 @@ while True:
 
     player_state = State(n_battlefields)
     player_state.battlefields = player_battlefields
+    initial_state.fill_empty()
     wins = Agent.get_winner(initial_state, player_state)
     print("Player:", player_battlefields)
     print("AI:", initial_state.battlefields)
