@@ -28,16 +28,22 @@ class State:
 
 # MAX_TROOPS == level width
 class StateContainer:
-    def __init__(n_battlefields, default):
-        self.level = 1
-        self.max_level = n_battlefields
-        if is_leaf():
+    def __init__(self, n_battlefields, default):
+        self.level = n_battlefields
+        self.min_level = 1
+        if self.is_leaf():
             self.values = [default] * MAX_TROOPS
         else:
             self.values = [StateContainer(n_battlefields - 1, default)] * MAX_TROOPS
 
+    def get(self, i):
+        return self.values[i- 1]
+
+    def set(self, i, value):
+        self.values[i - 1] = value
+
     def is_leaf(self):
-        return self.level == self.max_level
+        return self.level == self.min_level
 
 class Agent:
     def __init__(self, n_battlefields, e=0.2):
@@ -54,6 +60,26 @@ class Agent:
 
         return True
 
+    @staticmethod
+    def mean(array):
+        m = 0
+        for value in array:
+            m += value
+        return m / float(len(array))
+
+    def change_state(self, state, episode_return):
+        values = self.value_state
+        returns = self.returns
+        i = 0
+        while not values.is_leaf():
+            values = values.get(state.battlefields[i])
+            returns = returns.get(state.battlefields[i])
+        new_returns = returns.get(state.battlefields[i]) + [episode_return]
+        returns.set(state.battlefields[i], new_returns)
+        values.set(state.battlefields[i], Agent.mean(new_returns))
+
+
+
     def update_values(self, state_a, state_b):
         wins = 0
         for b1, b2 in zip(state_a.battlefields, state_b.battlefields):
@@ -65,18 +91,20 @@ class Agent:
         if wins > 0:
             print("Player A wins")
         elif wins < 0:
-            win = -win
+            wins = -wins
             print("Player B wins")
         else:
             print("There was a tie")
-        reward_a = win
-        reward_b = -win
+        reward_a = wins
+        reward_b = -wins
         returns_a = 0
         returns_b = 0
         while state_a and state_b:
             returns_a = reward_a * self.discount + reward_a
             returns_b = reward_b * self.discount + reward_b
+            self.change_state(state_a, returns_a)
 
+            #self.change_state(state_b, returns_b)
             state_a = state_a.parent
             state_b = state_b.parent
 
