@@ -2,6 +2,7 @@
 # troops to battlefields
 from random import random, randint
 import copy
+import sys
 
 # global constants
 MAX_TROOPS = 100
@@ -46,7 +47,7 @@ class State:
         return self.empty()
 
 class Container:
-    def __init__(self, n_battlefields, default=None, incremental=MAX_TROOPS):
+    def __init__(self, n_battlefields, default=None, incremental=MAX_TROOPS+1):
         self.level = n_battlefields
         self.min_level = 1
         self.incremental = incremental
@@ -61,17 +62,17 @@ class Container:
                 self.values.append(Container(n_battlefields - 1, default, incremental - i))
 
     def get(self, i):
-        return self.values[i- 1]
+        return self.values[i]
 
     def set(self, i, value):
-        self.values[i - 1] = value
+        self.values[i] = value
 
     def is_leaf(self):
         return self.level == self.min_level
 
 
 class Agent:
-    def __init__(self, n_battlefields, e=0.2):
+    def __init__(self, n_battlefields, e=0.05):
         self.policy = Container(n_battlefields)# OK
         self.returns = Container(n_battlefields + 1, [])
         self.action_value = Container(n_battlefields + 1, 0)
@@ -118,6 +119,7 @@ class Agent:
         action_value = self.action_value
         returns = self.returns
         i = 0
+
         print("State:", state.battlefields)
         while not policy.is_leaf():
             policy = policy.get(state.battlefields[i])
@@ -125,7 +127,6 @@ class Agent:
             returns = returns.get(state.battlefields[i])
             i += 1
 
-        print("ValueSize:", len(action_value.values))
         print("Action:", state.action + 1)
         action_value = action_value.get(state.action)
         returns = returns.get(state.action)
@@ -192,7 +193,7 @@ for episode in range(n_episodes):
 print("Training done!")
 while True:
     initial_state = State(n_battlefields)
-    while agent.update(initial_state):
+    while agent.update(initial_state, train=True):
         pass
     player_battlefields = [0] * n_battlefields
     for i in range(len(player_battlefields)):
