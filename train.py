@@ -19,29 +19,46 @@ class State:
         self.action = None
 
     def apply_action(self, troops):
-        self.parent = copy.copy(self)
+        self.parent = copy.deepcopy(self)
         for i in range(0, len(self.battlefields)):
             if self.battlefields[i] == 0:
                 self.battlefields[i] = troops
                 break
-        self.action = troops - 1
+        self.parent.action = troops - 1
         self.available_troops -= troops
 
+    def not_empty(self):
+        for value in self.battlefields:
+            if value == 0:
+                return False
+        return True
+
+    def empty(self):
+        for value in self.battlefields:
+            if value != 0:
+                return False
+        return True
+
     def is_terminal(self):
-        return self.available_troops == 0
+        return self.available_troops == 0 or self.not_empty()
 
     def is_initial(self):
-        return self.action == None
+        return self.empty()
 
-# MAX_TROOPS == level width
-class StateContainer:
-    def __init__(self, n_battlefields, default):
+class Container:
+    def __init__(self, n_battlefields, default=None, incremental=MAX_TROOPS):
         self.level = n_battlefields
         self.min_level = 1
+        self.incremental = incremental
+        self.values = []
         if self.is_leaf():
-            self.values = [default] * MAX_TROOPS
+            if default is not None:
+                self.values = [default] * incremental
+            else:
+                self.values = [randint(0, incremental)] * incremental
         else:
-            self.values = [StateContainer(n_battlefields - 1, default)] * MAX_TROOPS
+            for i in range(incremental):
+                self.values.append(Container(n_battlefields - 1, default, incremental - i))
 
     def get(self, i):
         return self.values[i- 1]
@@ -52,11 +69,12 @@ class StateContainer:
     def is_leaf(self):
         return self.level == self.min_level
 
+
 class Agent:
     def __init__(self, n_battlefields, e=0.2):
-        self.policy = StateContainer(n_battlefields, randint(1, MAX_TROOPS))
-        self.returns = StateContainer(n_battlefields + 1, [])
-        self.action_value = StateContainer(n_battlefields + 1, 0)
+        self.policy = Container(n_battlefields)# OK
+        self.returns = Container(n_battlefields + 1, [])
+        self.action_value = Container(n_battlefields + 1, 0)
         self.e_greedy = e
         self.discount = 0.1
 
@@ -64,12 +82,14 @@ class Agent:
         if state.is_terminal():
             return False
         policy = self.policy
+        i = 0
         while not policy.is_leaf():
             policy = policy.get(state.battlefields[i])
+            i += 1
 
         p_greedy = random()
-        if p_greedy < e_greedy and train:
-            state.apply_action(randint(1, state.available_troops))
+        if p_greedy < self.e_greedy and train:
+            state.apply_action(randint(0, state.available_troops))
         else:
             state.apply_action(policy.get(state.battlefields[i]))
 
@@ -84,29 +104,37 @@ class Agent:
         return m / float(len(array))
 
     @staticmethod
-    def max(array):
+    def argmax(array):
         m = array[0]
-        for value in array:
+        arg = 0
+        for i, value in enumerate(array):
             if value > m:
+                arg = i
                 m = value
-        return m
+        return arg
 
     def change_state(self, state, episode_return):
         policy = self.policy
         action_value = self.action_value
         returns = self.returns
         i = 0
+        print("State:", state.battlefields)
         while not policy.is_leaf():
             policy = policy.get(state.battlefields[i])
             action_value = action_value.get(state.battlefields[i])
             returns = returns.get(state.battlefields[i])
+            i += 1
 
+        print("ValueSize:", len(action_value.values))
+        print("Action:", state.action + 1)
         action_value = action_value.get(state.action)
         returns = returns.get(state.action)
+
+
         new_returns = returns.get(state.battlefields[i]) + [episode_return]
         returns.set(state.battlefields[i], new_returns)
         action_value.set(state.battlefields[i], Agent.mean(new_returns))
-        policy.set(state.battlefields[i], Agent.max(new_returns))
+        policy.set(state.battlefields[i], Agent.argmax(new_returns))
 
 
     @staticmethod
@@ -133,6 +161,9 @@ class Agent:
         reward_b = -wins
         returns_a = 0
         returns_b = 0
+        # start at T - 1
+        state_a = state_a.parent
+        state_b = state_b.parent
         while not state_a.is_initial() and not state_b.is_initial():
             returns_a = reward_a * self.discount + reward_a
             returns_b = reward_b * self.discount + reward_b
