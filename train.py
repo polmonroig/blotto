@@ -17,9 +17,9 @@ class State:
 
     def apply_action(self, troops):
         self.parent = copy.copy(self)
-        for battlefield in self.battlefields:
-            if battlefield == 0:
-                battlefield = troops
+        for i in range(0, len(self.battlefields)):
+            if self.battlefields[i] == 0:
+                self.battlefields[i] = troops
                 break
         self.available_troops -= troops
 
@@ -40,6 +40,18 @@ class Agent:
         return True
 
     def update_values(self, state_a, state_b):
+        wins = 0
+        for b1, b2 in zip(state_a.battlefields, state_b.battlefields):
+            if b1 > b2:
+                wins += 1
+            elif b1 < b2:
+                wins -= 1
+        if wins > 0:
+            print("Player A wins")
+        elif wins < 0:
+            print("Player B wins")
+        else:
+            print("There was a tie")
         pass
 
 
