@@ -1,44 +1,54 @@
 # Blotto game is a simple game where you assing
 # troops to battlefields
-from enum import Enum
+from random import random
 import numpy as np
 
 # global constants
 MAX_TROOPS = 100
 
 # define actions
-ActionType = Enum("ActionType", "Resign AssignTroops")
-
-class Action:
-    def __init__(self, action_type):
-        self.type = action_type
-        self.troops = 0
-        self.battlefield = 0
-
-    def add_troops(self, battlefield, troops):
-        self.troops = troops
-        self.battlefield = battlefield
+# Action -> number of troops to assign
 
 class State:
-    def __init__(self, size):
+    def __init__(self, size, available_troops=MAX_TROOPS):
+        self.parent = None
         self.battlefields = np.array(size)
-        self.terminal = False
+        self.available_troops = available_troops
 
     def apply_action(self, action):
-        if action.type == Actions.Resign:
-            self.terminal = True
-        else:
-            self.battlefields[action.battlefield] = action.troops
+        self.parent = self.copy()
+        for battlefield in self.battlefields:
+            if battlefield == 0:
+                battlefield = action.troops
+                break
+        self.available_troops -= action.troops
 
     def is_terminal(self):
-        return self.terminal
+        return self.available_troops == 0
 
 class Agent:
-    def __init__(self, n_states):
-        self.policy = np.array(n_states)
+    def __init__(self, n_states, e=0.2):
+        self.value_state = np.array(n_states)
+        self.e_greedy = e
 
-n_battlefields = input("Enter number of #battlefields")
+    def update(self, state):
+        if state.is_terminal():
+            return False
 
-# number of states equals n_battlefields
-states = np.array(n_battlefields)
-# n_actioned
+    def update_values(self, state_a, state_b):
+        pass 
+
+
+n_episodes = input("Enter number of episodes")
+n_battlefields = input("Enter number of battlefields")
+agent = Agent(n_battlefields)
+for episode in range(n_episodes):
+    print("Episode:", episode)
+    # double update
+    initial_state_a = State(n_battlefields)
+    initial_state_b = State(n_battlefields)
+    while agent.update(initial_state_a):
+        pass
+    while agent.update(initial_state_b):
+        pass
+    agent.update_values(initial_state_a, initial_state_b)
