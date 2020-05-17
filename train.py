@@ -200,9 +200,11 @@ while True:
     while agent.update(initial_state, train=True):
         pass
     player_battlefields = [0] * n_battlefields
+    total = 100
     for i in range(len(player_battlefields)):
         player_battlefields[i] = int(input("Enter troops for battlefield " + str(i) + " "))
-
+        total -= player_battlefields[i]
+        print("Remaining soldiers:", total)
 
     player_state = State(n_battlefields)
     player_state.battlefields = player_battlefields
