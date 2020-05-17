@@ -16,7 +16,8 @@ class State:
     def __init__(self, size, available_troops=MAX_TROOPS):
         self.parent = None
         self.battlefields = [0] * size
-        self.available_troops = available_troops
+        self.battlefields[0] = randint(0, 50)
+        self.available_troops = available_troops-self.battlefields[0]
         self.action = None
 
     def apply_action(self, troops):
@@ -34,17 +35,12 @@ class State:
                 return False
         return True
 
-    def empty(self):
-        for value in self.battlefields:
-            if value != 0:
-                return False
-        return True
 
     def is_terminal(self):
         return self.available_troops == 0 or self.not_empty()
 
     def is_initial(self):
-        return self.empty()
+        return self.parent == None
 
 class Container:
     def __init__(self, n_battlefields, default=None, incremental=MAX_TROOPS+1):
