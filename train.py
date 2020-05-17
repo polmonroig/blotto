@@ -1,7 +1,6 @@
 # Blotto game is a simple game where you assing
 # troops to battlefields
 from random import random, randint
-import numpy as np
 import copy
 
 # global constants
