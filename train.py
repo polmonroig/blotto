@@ -8,15 +8,18 @@ import sys
 MAX_TROOPS = 100
 n_wins_a = 0
 n_wins_b = 0
-
+sys.setrecursionlimit(10000)
 # define actions
 # Action -> number of troops to assign
 
 class State:
-    def __init__(self, size, available_troops=MAX_TROOPS):
+    def __init__(self, size, available_troops=MAX_TROOPS, train=True):
         self.parent = None
         self.battlefields = [0] * size
-        self.battlefields[0] = randint(0, 50)
+        if train:
+            self.battlefields[0] = randint(0, 50)
+        else:
+            self.battlefields[0] = 0
         self.available_troops = available_troops-self.battlefields[0]
         self.action = None
 
@@ -196,7 +199,7 @@ for episode in range(n_episodes):
 
 print("Training done!")
 while True:
-    initial_state = State(n_battlefields)
+    initial_state = State(n_battlefields, train=False)
     while agent.update(initial_state, train=True):
         pass
     player_battlefields = [0] * n_battlefields
